@@ -5,15 +5,65 @@ fn main() {
     let file_path = "./report";
     let report_vec: Vec<Vec<i32>> = read_file(file_path);
     let predictions: Vec<i32>  = predict_value(report_vec);
-    print_predictions(predictions);
+    let sum: i32 = sum_predictions(predictions);
+    println!("{sum}");
 }
 
-fn print_predictions(predictions: Vec<i32>) {
-    
+fn sum_predictions(predictions: Vec<i32>) -> i32 {
+    let mut sum: i32 = 0;
+
     for prediction in predictions {
-        println!("{prediction}");
+        sum += prediction;
     }
 
+    return sum;
+}
+
+fn print_predictions(predictions: &[i32]) {
+    
+    for prediction in predictions {
+        print!("{prediction} ");
+    }
+
+    println!("");
+
+}
+
+fn print_history(report: &[Vec<i32>]) {
+
+
+    for line in report {
+        for item in line {
+            print!("{item} ");
+        }
+        println!("");
+    }
+
+}
+
+fn predict_value_l(report_vec: Vec<Vec<i32>>) -> Vec<i32> {
+    let mut output_vec: Vec<i32> = Vec::new();
+    for report in report_vec {
+        let mut history:Vec<Vec<i32>> = generate_history(report.clone());
+        let hist_len = history.len() - 1;
+        history[hist_len].splice(..0, [0]);
+        let mut i = hist_len - 1;
+
+        loop {
+            let prev_val: i32 = history[i+1][history[i+1].len() - 1];
+            let curr_val: i32 = history[i][history[i].len() - 1];
+            let result: i32 = curr_val - prev_val;
+            history[i].splice(..0, [result]);
+            if i == 0 {
+                break;
+            } else {
+                i -= 1;
+            }
+        }
+
+        output_vec.push(history[0][history[0].len() - 1]);
+    }
+    return output_vec;
 }
 
 fn predict_value(report_vec: Vec<Vec<i32>>) -> Vec<i32> {
@@ -27,7 +77,8 @@ fn predict_value(report_vec: Vec<Vec<i32>>) -> Vec<i32> {
         loop {
             let prev_val: i32 = history[i+1][history[i+1].len() - 1];
             let curr_val: i32 = history[i][history[i].len() - 1];
-            history[i].push(curr_val + prev_val);
+            let result: i32 = curr_val - prev_val;
+            history[i].push(result);
             if i == 0 {
                 break;
             } else {
@@ -42,21 +93,22 @@ fn predict_value(report_vec: Vec<Vec<i32>>) -> Vec<i32> {
 
 fn generate_history(incoming_vec: Vec<i32>) -> Vec<Vec<i32>> {
     let mut output_vec: Vec<Vec<i32>> = Vec::new();
-    let mut run: bool = true;
     output_vec.push(incoming_vec);
     let mut out_index = 0;
 
-    while run {
+    loop {
         let mut measure_vec: Vec<i32> = Vec::new();
         let curr_vec = &output_vec[out_index];
         for i in 1..curr_vec.len() {
             measure_vec.push(curr_vec[i] - curr_vec[i-1]);
         }
 
+        // print_predictions(&measure_vec);
+
         output_vec.push(measure_vec.clone());
 
         if all_zero(&measure_vec) {
-            run = false;
+            break;
         }
 
         out_index += 1;
